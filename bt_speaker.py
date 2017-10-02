@@ -55,12 +55,24 @@ class PipedSBCAudioSinkWithAlsaVolumeControl(SBCAudioSink):
                        alsa_cardindex=int(config.get('alsa', 'cardindex')),
                        buf_size=2560):
         SBCAudioSink.__init__(self, path=path)
-        # Start process
-        self.process = subprocess.Popen(command, shell=True, bufsize=buf_size, stdin=subprocess.PIPE)
-        # Hook into alsa service for volume control
-        self.alsamixer = alsaaudio.Mixer(control=alsa_control,
-                                         id=alsa_id,
-                                         cardindex=alsa_cardindex)
+        self.command = command
+        self.alsa_control = alsa_control
+        self.alsa_id = alsa_id
+        self.alsa_cardindex = alsa_cardindex
+        self.buf_size = buf_size
+        self.process = 0
+        
+    def start_process_sink(self):
+         # Start process
+         self.process = subprocess.Popen(self.command, shell=True, bufsize=self.buf_size, stdin=subprocess.PIPE)
+         # Hook into alsa service for volume control
+         self.alsamixer = alsaaudio.Mixer(control=self.alsa_control,
+                                         id=self.alsa_id,
+                                         cardindex=self.alsa_cardindex)
+
+    def stop_process_sink(self):
+        # Stop the process to 
+        self.process.communicate()
 
     def raw_audio(self, data):
         # pipe to the play command
@@ -147,11 +159,13 @@ def setup_bt():
     sink = PipedSBCAudioSinkWithAlsaVolumeControl()
     media = BTMedia(config.get('bluez', 'device_path'))
     media.register_endpoint(sink._path, sink.get_properties())
-
     def connect():
+        sink.start_process_sink()
+        sink.process
         subprocess.Popen(config.get('bt_speaker', 'connect_command'), shell=True)
 
     def disconnect():
+        sink.stop_process_sink()
         sink.close_transport()
         subprocess.Popen(config.get('bt_speaker', 'disconnect_command'), shell=True)
 
