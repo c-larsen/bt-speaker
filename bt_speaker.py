@@ -24,8 +24,6 @@ BTSPEAKER_CONFIG_FILE = '/etc/bt_speaker/config.ini'
 default_config = u'''
 [bt_speaker]
 play_command = aplay -f cd -
-connect_command = ogg123 /usr/share/sounds/freedesktop/stereo/service-login.oga
-disconnect_command = ogg123 /usr/share/sounds/freedesktop/stereo/service-logout.oga
 disable_wifi_on_connect = yes
 wifi_down_command = ifconfig wlan0 down
 wifi_up_command = ifconfig wlan0 up
@@ -160,14 +158,16 @@ def setup_bt():
     media = BTMedia(config.get('bluez', 'device_path'))
     media.register_endpoint(sink._path, sink.get_properties())
     def connect():
+        if config.get('bt_speaker', 'connect_command'):
+            subprocess.Popen(config.get('bt_speaker', 'connect_command'), shell=True)
         sink.start_process_sink()
         sink.process
-        subprocess.Popen(config.get('bt_speaker', 'connect_command'), shell=True)
-
+    
     def disconnect():
         sink.stop_process_sink()
         sink.close_transport()
-        subprocess.Popen(config.get('bt_speaker', 'disconnect_command'), shell=True)
+        if config.get('bt_speaker', 'disconnect_command'):
+            subprocess.Popen(config.get('bt_speaker', 'disconnect_command'), shell=True)
 
     # setup bluetooth agent (that manages connections of devices)
     agent = AutoAcceptSingleAudioAgent(connect, disconnect)
