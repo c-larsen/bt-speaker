@@ -5,7 +5,7 @@ set -e
 
 echo "Installing dependencies..."
 apt-get update
-apt-get --assume-yes install git bluez python python-gobject python-cffi python-dbus python-alsaaudio python-configparser sound-theme-freedesktop vorbis-tools
+apt-get --assume-yes install git bluez python python-gobject python-cffi python-dbus python-alsaaudio python-configparser
 echo "done."
 
 # Download bt-speaker to /opt (or update if already present)
